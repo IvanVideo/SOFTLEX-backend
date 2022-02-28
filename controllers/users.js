@@ -2,22 +2,26 @@ const users = require('../models/users');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const SALT_ROUNDS = 10;
+const InvalidEmail = require('../errors/incorrect-data-error');
+const {
+    alreadyUsed,
+  } = require('../utils/constants');
 
 const getUserInfo = (req, res, next) => {
     users.findById(req.user._id)
-      .orFail('не найдено')
-      .then((user) => res.send(user))
-      .catch((err) => {
-        if (err.message === 'PageNotFound') {
-          console.log('не найдено');
-        }
-        if (err.name === 'CastError') {
-            console.log('не найдено');
-        }
-        throw err;
-      })
-      .catch(next);
-  };
+        .orFail('не найдено')
+        .then((user) => res.send(user))
+        .catch((err) => {
+            if (err.message === 'PageNotFound') {
+                console.log('не найдено');
+            }
+            if (err.name === 'CastError') {
+                console.log('не найдено');
+            }
+            throw err;
+        })
+        .catch(next);
+};
 
 const createUser = (req, res, next) => {
     const {
@@ -26,7 +30,7 @@ const createUser = (req, res, next) => {
     users.findOne({ name })
         .then((user) => {
             if (user) {
-                return
+                throw new InvalidEmail(alreadyUsed);
             } return bcrypt.hash(password, SALT_ROUNDS);
         })
         .then((hash) => users.create({
@@ -39,7 +43,8 @@ const createUser = (req, res, next) => {
             },
         }))
         .catch((err) => {
-            console.log(err)
+            throw err;
+            // console.log('Пользователь с таким логином уже зарегистрирован')
         })
         .catch(next);
 };
