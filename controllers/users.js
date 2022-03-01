@@ -2,10 +2,6 @@ const users = require('../models/users');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const SALT_ROUNDS = 10;
-const InvalidEmail = require('../errors/incorrect-data-error');
-const {
-    alreadyUsed,
-  } = require('../utils/constants');
 
 const getUserInfo = (req, res, next) => {
     users.findById(req.user._id)
@@ -13,10 +9,10 @@ const getUserInfo = (req, res, next) => {
         .then((user) => res.send(user))
         .catch((err) => {
             if (err.message === 'PageNotFound') {
-                console.log('не найдено');
+                throw new Error('Страница не найдена');
             }
             if (err.name === 'CastError') {
-                console.log('не найдено');
+                throw new Error('Невалидные значения');
             }
             throw err;
         })
@@ -30,7 +26,7 @@ const createUser = (req, res, next) => {
     users.findOne({ name })
         .then((user) => {
             if (user) {
-                throw new InvalidEmail(alreadyUsed);
+                throw new Error('Пользователь с таким логином уже зарегистрирован');
             } return bcrypt.hash(password, SALT_ROUNDS);
         })
         .then((hash) => users.create({
@@ -44,7 +40,6 @@ const createUser = (req, res, next) => {
         }))
         .catch((err) => {
             throw err;
-            // console.log('Пользователь с таким логином уже зарегистрирован')
         })
         .catch(next);
 };
@@ -57,10 +52,10 @@ const login = (req, res, next) => {
     return users.findOne({ name }).select('+password')
         .then((user) => {
             if (!user) {
-                console.log('пользователь не найден');
+                throw new Error('Пользователь не найден');
             }
             return bcrypt.compare(password, user.password)
-                .then((matched) => { // eslint-disable-line
+                .then((matched) => {
                     if (!matched) {
                         console.log('rrr');
                     } else {

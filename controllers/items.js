@@ -1,5 +1,17 @@
 const items = require('../models/items');
 
+const changeItem = (req, res, next) => {
+  const { text, status } = req.body;
+  return items.findByIdAndUpdate(req.body.id,
+    { text, status },
+    {
+      runValidators: true,
+      new: true,
+    })
+    .then(item => res.send({ data: item })
+      .catch(() => res.status(500).send({ message: 'Произошла ошибка' })));
+}
+
 const getItems = (req, res, next) => {
   return items.find({})
     .then(item => res.send({ data: item }))
@@ -22,7 +34,7 @@ const createItem = (req, res, next) => {
     .then((item) => res.send({ data: item }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        throw new IncorrectData(invalid);
+        throw new Error('Некоректные данные');
       }
       throw err;
     })
@@ -32,4 +44,5 @@ const createItem = (req, res, next) => {
 module.exports = {
   getItems,
   createItem,
+  changeItem,
 };
